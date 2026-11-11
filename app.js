@@ -1,6 +1,6 @@
 import {onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {auth} from "./firebase.js";
-import {T,$,el,toast,label,cardEl,cardsOf,api,signIn,showProgress,renderNav,renderWho} from "./shared.js";
+import {$,el,toast,cardEl,cardsOf,api,signIn,showProgress,renderNav,renderWho} from "./shared.js";
 
 let me=null, mine=[], found=null, coolTimer;
 
@@ -10,7 +10,7 @@ async function openPack(){
   try{
     const cards = await api("open_pack");                 // rarity and serials are rolled on the server
     const box=$("#reveal"); box.replaceChildren();
-    cards.forEach((c,i)=>{const e=cardEl(c); e.classList.add("pop"); e.style.animationDelay=(0.5+i*1)+"s"; box.append(e)});
+    cards.forEach((c,i)=>{const e=cardEl(c); e.classList.add("pop"); e.onanimationend=ev=>{ if(ev.animationName==="pop") e.classList.remove("pop"); }; e.style.animationDelay=(0.5+i*1)+"s"; box.append(e)});
     await refreshCollection();
   }catch(e){ toast(e.message); }
   cooldownTick();
@@ -59,9 +59,9 @@ function updateSummary(){
 }
 function fillPicks(box,cards,checked=[]){
   box.replaceChildren(...cards.map(c=>{
-    const row=el("label","pick"), cb=document.createElement("input"), txt=el("span","",label(c));
+    const row=el("label","pick"), cb=document.createElement("input");
     cb.type="checkbox"; cb.value=c.id; cb.checked=checked.includes(c.id); cb.onchange=updateSummary;
-    txt.style.setProperty("--c",T[c.rarity].color); row.append(cb,txt); return row;
+    row.append(cb,cardEl(c),el("span","tick","✓")); return row;
   }));
   updateSummary();
 }
@@ -79,16 +79,11 @@ async function respond(trade,act){
 }
 /* A trade's offer/want can be one card (old trades) or an array of cards. */
 const asList = x => Array.isArray(x) ? x : [x];
-const plain = cards => asList(cards).map(label).join(", ");
-function names(cards){
-  const s=el("span");
-  asList(cards).forEach((c,i)=>{ if(i) s.append(", "); const b=el("b","",label(c)); b.style.setProperty("--c",T[c.rarity].color); s.append(b); });
-  return s;
-}
+const cardRow = cards => { const g=el("div","grid mini"); g.append(...asList(cards).map(cardEl)); return g; };
 function offerRow(t,incoming){
   const row=el("div","offer"), txt=el("div","txt");
-  txt.append(incoming?`${t.sender.name} offers `:"You want ", names(incoming?t.offer:t.want),
-    el("div","muted", incoming ? `for your ${plain(t.want)}` : `from ${t.receiver.name} for your ${plain(t.offer)}`));
+  txt.append(el("div","",incoming ? `${t.sender.name} offers` : `You want, from ${t.receiver.name}`),
+    cardRow(incoming?t.offer:t.want), el("div","muted","for your"), cardRow(incoming?t.want:t.offer));
   row.append(txt);
   const btn=(text,act)=>{const b=el("button","",text); b.onclick=()=>respond(t.id,act); return b};
   row.append(...(incoming ? [btn("Accept","accept"),btn("Decline","decline")] : [btn("Cancel","cancel")]));
