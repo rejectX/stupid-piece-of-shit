@@ -131,3 +131,9 @@ td.hasTip:focus-visible{outline:3px solid #fff;outline-offset:-3px}
   font-weight:800;font-size:.85rem;box-shadow:0 4px 0 #000;pointer-events:none;white-space:pre-wrap}
 .tip[hidden]{display:none}
 .tip .tt{font-family:"Lilita One";font-weight:400;font-size:1rem;margin-bottom:2px}
+
+/* ---------- sortable rarity headers ---------- */
+th.sortable{cursor:pointer;user-select:none}
+th.sortable:hover{text-decoration:underline;text-underline-offset:3px}
+th.sortable:focus-visible{outline:3px solid #fff;outline-offset:-3px}
+th.sortable .arrow{font-size:.8em}

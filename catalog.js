@@ -3,6 +3,7 @@ import {TIERS,$,el,onUser,api,cardsOf,levelList} from "./shared.js";
 const fmt = n => n.toLocaleString();
 const cell = (tag,text,cls) => el(tag,cls||"",text);
 let rows = [];                       // [{name,pos,cards:{tier:[{serial,owner}]}}]
+let sort = {tier:null,dir:-1}, focusTier = null;   // dir -1 = most copies first, 1 = fewest first
 
 /* ---------- owner tooltip ---------- */
 const tip = el("div","tip"); tip.hidden = true; tip.setAttribute("role","tooltip"); document.body.append(tip);
@@ -60,8 +61,24 @@ function renderTiers(ownersByTier,levelCount){
 function renderLevels(){
   const q = $("#levelFilter").value.trim().toLowerCase();
   const head = el("tr"); head.append(cell("th","#"),cell("th","Level"));
-  TIERS.forEach(t=>{const h=cell("th",t.name,"tiername"); h.style.setProperty("--c",t.color); head.append(h)});
-  const body = rows.filter(r=>r.name.toLowerCase().includes(q)).map(r=>{
+  /* Click a rarity: most copies first, click again: fewest first, again: back to list order. */
+  TIERS.forEach(t=>{
+    const h = cell("th",t.name,"tiername sortable"), on = sort.tier===t.id;
+    h.style.setProperty("--c",t.color); h.dataset.tier = t.id; h.tabIndex = 0;
+    h.title = `Sort by number of ${t.name} copies`;
+    h.setAttribute("aria-sort", on ? (sort.dir<0?"descending":"ascending") : "none");
+    if(on) h.append(" ", el("span","arrow", sort.dir<0 ? "▼" : "▲"));
+    const toggle = () => {
+      sort = !on ? {tier:t.id,dir:-1} : sort.dir<0 ? {tier:t.id,dir:1} : {tier:null,dir:-1};
+      focusTier = t.id; renderLevels();
+    };
+    h.onclick = toggle;
+    h.onkeydown = e => { if(e.key==="Enter"||e.key===" "){ e.preventDefault(); toggle(); } };
+    head.append(h);
+  });
+  let shown = rows.filter(r=>r.name.toLowerCase().includes(q));
+  if(sort.tier){ const n = r=>(r.cards[sort.tier]||[]).length; shown = [...shown].sort((a,b)=>sort.dir*(n(a)-n(b))); }   // ties keep list order
+  const body = shown.map(r=>{
     const tr = el("tr"); tr.append(cell("td",r.pos??"–"),cell("td",r.name));
     TIERS.forEach(t=>{
       const cards = r.cards[t.id]||[], n = cards.length;
@@ -75,6 +92,7 @@ function renderLevels(){
   if(!body.length){ const tr=el("tr"), td=cell("td","No levels match."); td.colSpan=2+TIERS.length; tr.append(td); body.push(tr); }
   const thead = el("thead"); thead.append(head);
   $("#levels").replaceChildren(thead,...body);
+  if(focusTier){ $(`#levels th[data-tier="${focusTier}"]`)?.focus(); focusTier = null; }
 }
 
 onUser(async()=>{
