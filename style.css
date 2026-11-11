@@ -8,7 +8,7 @@ body{margin:0;color:var(--ink);font:600 16px/1.5 Nunito,sans-serif;min-height:10
 h1,h2,h3,button{font-family:"Lilita One",sans-serif;font-weight:400}
 header{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:center;padding:14px 24px;background:rgba(7,10,43,.85);border-bottom:4px solid var(--edge)}
 h1{margin:0;font-size:2rem;color:var(--accent);text-shadow:3px 3px 0 #000}
-nav{display:flex;gap:8px;flex:1}
+nav{display:flex;flex-wrap:wrap;gap:8px;flex:1}
 #who{display:flex;gap:10px;align-items:center;margin-left:auto}
 main{max-width:1200px;margin:0 auto;padding:24px}
 h2{font-size:1.5rem;margin:24px 0 10px;text-shadow:2px 2px 0 #000}

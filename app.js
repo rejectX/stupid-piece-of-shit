@@ -1,8 +1,7 @@
-import {signOut,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {auth} from "./firebase.js";
-import {T,$,el,toast,label,cardEl,cardsOf,profileUrl,api,signIn,showProgress} from "./shared.js";
+import {T,$,el,toast,label,cardEl,cardsOf,api,signIn,showProgress,renderNav,renderWho} from "./shared.js";
 
-const NAME_RE = /^[A-Za-z0-9_.-]{3,20}$/;
 let me=null, mine=[], found=null, coolTimer;
 
 /* ---------- packs ---------- */
@@ -11,7 +10,7 @@ async function openPack(){
   try{
     const cards = await api("open_pack");                 // rarity and serials are rolled on the server
     const box=$("#reveal"); box.replaceChildren();
-    cards.forEach((c,i)=>{const e=cardEl(c); e.classList.add("pop"); e.style.animationDelay=i*0.25+"s"; box.append(e)});
+    cards.forEach((c,i)=>{const e=cardEl(c); e.classList.add("pop"); e.style.animationDelay=(0.5+i*1)+"s"; box.append(e)});
     await refreshCollection();
   }catch(e){ toast(e.message); }
   cooldownTick();
@@ -81,42 +80,23 @@ async function loadTrades(){
   fill($("#outgoing"),data.filter(t=>t.from_id===me.id),false);
 }
 
-/* ---------- usernames ---------- */
-function renderWho(){
-  const out=el("button","","Sign out"), ren=el("button","","Change username"), nm=el("a","",me.name);
-  nm.href=profileUrl(me.id); nm.title="View your profile";
-  out.onclick=()=>signOut(auth);
-  ren.onclick=()=>{$("#newName").value=me.name; $("#nameErr").textContent=""; $("#nameDlg").showModal(); $("#newName").select()};
-  $("#who").replaceChildren(nm,ren,out);
-}
-$("#cancelName").onclick=()=>$("#nameDlg").close();
-$("#nameForm").onsubmit=async e=>{
-  e.preventDefault();
-  const name=$("#newName").value.trim(), err=$("#nameErr");
-  if(!NAME_RE.test(name)) return err.textContent="Use 3–20 letters, numbers, _ . or -";
-  if(name===me.name) return $("#nameDlg").close();
-  try{ await api("rename",{name}); me.name=name; renderWho(); $("#nameDlg").close(); toast("Username changed to "+name+"."); }
-  catch(ex){ err.textContent=ex.message; }
-};
-
 /* ---------- shell ---------- */
 function show(tab){
   document.querySelectorAll(".tab").forEach(s=>s.hidden=s.id!==tab);
-  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.tab===tab));
+  document.querySelectorAll("nav [data-tab]").forEach(b=>b.classList.toggle("on",b.dataset.tab===tab));
   if(tab==="collection") refreshCollection();
   if(tab==="trades") loadTrades();
 }
-document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>show(b.dataset.tab));
 $("#signin").onclick=signIn; $("#open").onclick=openPack; $("#find").onclick=findCollector; $("#send").onclick=sendTrade;
 
 onAuthStateChanged(auth, async u=>{
   $("#login").hidden=!!u; $("#nav").hidden=!u;
-  if(!u){ document.querySelectorAll(".tab").forEach(s=>s.hidden=true); $("#who").replaceChildren(); return; }
+  if(!u){ document.querySelectorAll(".tab").forEach(s=>s.hidden=true); $("#who").replaceChildren(); $("#nav").replaceChildren(); return; }
   try{
     me=await api("claim");
-    renderWho(); $("#myProfile").href=profileUrl(me.id); cooldownTick();
+    renderNav(me,show); renderWho(me); cooldownTick();
     const p=new URLSearchParams(location.search), tu=p.get("trade");
     if(tu){ await refreshCollection(); show("trades"); await openCollector(tu,p.get("want")); history.replaceState(null,"",location.pathname); }
-    else show("collection");
+    else show(["collection","packs","trades"].includes(location.hash.slice(1)) ? location.hash.slice(1) : "collection");
   }catch(e){ console.error(e); toast(e.message); }
 });

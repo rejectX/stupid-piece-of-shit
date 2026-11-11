@@ -11,14 +11,7 @@
 <body>
 <header>
   <h1>Demon Deck</h1>
-  <nav id="nav" hidden>
-    <button data-tab="collection" class="on">Collection</button>
-    <button data-tab="packs">Open packs</button>
-    <button data-tab="trades">Trades</button>
-    <a class="btn" href="users.html">Players</a>
-    <a class="btn" href="catalog.html">Catalog</a>
-    <a class="btn" id="myProfile" href="profile.html">My profile</a>
-  </nav>
+  <nav id="nav" hidden></nav>
   <div id="who"></div>
 </header>
  
@@ -62,19 +55,6 @@
     <h2>Offers you sent</h2><div id="outgoing" class="list"></div>
   </section>
 </main>
- 
-<dialog id="nameDlg">
-  <form id="nameForm">
-    <h2>Change username</h2>
-    <p class="muted">3–20 characters: letters, numbers, _ . -</p>
-    <input id="newName" maxlength="20" autocomplete="off" aria-label="New username">
-    <p id="nameErr" class="err" role="alert"></p>
-    <div class="row">
-      <button type="submit" class="big">Save name</button>
-      <button type="button" id="cancelName">Cancel</button>
-    </div>
-  </form>
-</dialog>
  
 <div id="toast" role="status"></div>
 <script type="module" src="app.js"></script>

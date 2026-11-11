@@ -1,4 +1,4 @@
-import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {GoogleAuthProvider,signInWithPopup,signOut,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {auth} from "./firebase.js";
 import {API_URL,LEVELS_URL} from "./config.js";
 
@@ -40,16 +40,69 @@ export function cardEl(c){
 export const sortCards = a => a.sort((x,y)=>T[x.rarity].rank-T[y.rarity].rank || x.lvlname.localeCompare(y.lvlname) || x.serial-y.serial);
 export async function cardsOf(ownerId){ return sortCards(await api("cards",{owner:ownerId})); }
 
-/* For profile.html and users.html: needs #login, #signin, #content, #nav. cb receives the signed-in profile {id,name}. */
+/* ---------- header: one list of buttons, rendered the same on every page ---------- */
+/* {tab} = a tab on index.html, {href} = a page, {mine} = the signed-in user's profile. Add new header buttons here. */
+export const NAV = [
+  {tab:"collection",text:"Collection"},
+  {tab:"packs",text:"Open packs"},
+  {tab:"trades",text:"Trades"},
+  {href:"users.html",text:"Players"},
+  {href:"catalog.html",text:"Catalog"},
+  {mine:true,text:"My profile"}
+];
+/* On index.html pass onTab to switch tabs in place; everywhere else the tab buttons link to index.html#tab. */
+export function renderNav(me,onTab){
+  const here = location.pathname.split("/").pop() || "index.html";
+  $("#nav").replaceChildren(...NAV.map(n=>{
+    if(n.tab){
+      if(onTab){ const b=el("button","",n.text); b.dataset.tab=n.tab; b.onclick=()=>onTab(n.tab); return b; }
+      const a=el("a","btn",n.text); a.href=`index.html#${n.tab}`; return a;
+    }
+    const href = n.mine ? profileUrl(me.id) : n.href, a = el("a","btn",n.text); a.href = href;
+    const ownProfile = n.mine && new URLSearchParams(location.search).get("u")===me.id;
+    if(here===href.split("?")[0] && (!n.mine || ownProfile)) a.classList.add("on");
+    return a;
+  }));
+}
+
+/* Username link, Change username and Sign out; the rename dialog is created on demand so every page has it. */
+const NAME_RE = /^[A-Za-z0-9_.-]{3,20}$/;
+let whoMe = null;
+function ensureNameDialog(){
+  if($("#nameDlg")) return;
+  const d = el("dialog"); d.id = "nameDlg";
+  d.innerHTML = `<form id="nameForm"><h2>Change username</h2><p class="muted">3–20 characters: letters, numbers, _ . -</p>
+    <input id="newName" maxlength="20" autocomplete="off" aria-label="New username"><p id="nameErr" class="err" role="alert"></p>
+    <div class="row"><button type="submit" class="big">Save name</button><button type="button" id="cancelName">Cancel</button></div></form>`;
+  document.body.append(d);
+  $("#cancelName").onclick = () => d.close();
+  $("#nameForm").onsubmit = async e=>{
+    e.preventDefault();
+    const name=$("#newName").value.trim(), err=$("#nameErr");
+    if(!NAME_RE.test(name)) return err.textContent="Use 3–20 letters, numbers, _ . or -";
+    if(name===whoMe.name) return d.close();
+    try{ await api("rename",{name}); whoMe.name=name; renderWho(whoMe); d.close(); toast("Username changed to "+name+"."); }
+    catch(ex){ err.textContent=ex.message; }
+  };
+}
+export function renderWho(me){
+  whoMe = me; ensureNameDialog();
+  const nm=el("a","",me.name), ren=el("button","","Change username"), out=el("button","","Sign out");
+  nm.href=profileUrl(me.id); nm.title="View your profile";
+  ren.onclick=()=>{ $("#newName").value=me.name; $("#nameErr").textContent=""; $("#nameDlg").showModal(); $("#newName").select(); };
+  out.onclick=()=>signOut(auth);
+  $("#who").replaceChildren(nm,ren,out);
+}
+
+/* For profile.html, users.html and catalog.html: needs #login, #signin, #content, #nav, #who. cb receives the signed-in profile {id,name}. */
 export function onUser(cb){
   $("#signin").onclick = signIn;
   onAuthStateChanged(auth, async u=>{
     $("#login").hidden = !!u; $("#content").hidden = !u;
-    if(!u){ $("#nav").replaceChildren(); return; }
+    if(!u){ $("#nav").replaceChildren(); $("#who").replaceChildren(); return; }
     try{
       const me = await api("claim");
-      const link=(href,text)=>{const a=el("a","btn",text); a.href=href; return a};
-      $("#nav").replaceChildren(link("index.html","Collection"),link("users.html","Players"),link("catalog.html","Catalog"),link(profileUrl(me.id),"My profile"));
+      renderNav(me); renderWho(me);
       await cb(me);
     }catch(e){ console.error(e); toast(e.message); }
   });
