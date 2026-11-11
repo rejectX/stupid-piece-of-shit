@@ -18,19 +18,19 @@
   </nav>
   <div id="who"></div>
 </header>
-
+ 
 <main>
   <section id="login" class="panel">
     <h2>Collect the hardest levels in Geometry Dash</h2>
     <p>Open packs, pull cards from the demon list, and trade with other collectors. Sign in to start.</p>
     <button id="signin" class="big">Sign in with Google</button>
   </section>
-
+ 
   <section id="collection" class="tab" hidden>
     <p id="stats" class="muted"></p>
     <div id="grid" class="grid"></div>
   </section>
-
+ 
   <section id="packs" class="tab" hidden>
     <div class="panel">
       <h2>Open a pack</h2>
@@ -40,7 +40,7 @@
     </div>
     <div id="reveal" class="grid"></div>
   </section>
-
+ 
   <section id="trades" class="tab" hidden>
     <div class="panel">
       <h2>Start a trade</h2>
@@ -58,7 +58,20 @@
     <h2>Offers you sent</h2><div id="outgoing" class="list"></div>
   </section>
 </main>
-
+ 
+<dialog id="nameDlg">
+  <form id="nameForm">
+    <h2>Change username</h2>
+    <p class="muted">3–20 characters: letters, numbers, _ . -</p>
+    <input id="newName" maxlength="20" autocomplete="off" aria-label="New username">
+    <p id="nameErr" class="err" role="alert"></p>
+    <div class="row">
+      <button type="submit" class="big">Save name</button>
+      <button type="button" id="cancelName">Cancel</button>
+    </div>
+  </form>
+</dialog>
+ 
 <div id="toast" role="status"></div>
 <script type="module" src="app.js"></script>
 </body>

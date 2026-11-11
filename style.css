@@ -33,7 +33,7 @@ input,select{background:#fff;color:#000;box-shadow:none;max-width:100%}
 .offer b{color:var(--c)}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:22px}
 .tab[hidden],[hidden]{display:none!important}
-
+ 
 /* ---------- cards ---------- */
 .card{--c:#8da0c8;position:relative;overflow:hidden;aspect-ratio:5/7;display:flex;flex-direction:column;padding:10px;
   background:linear-gradient(#141c5e,#0a0f33);border:5px solid var(--c);border-radius:16px;
@@ -46,7 +46,7 @@ input,select{background:#fff;color:#000;box-shadow:none;max-width:100%}
 .foot .rar{background:var(--c);color:#000;border-radius:6px;padding:1px 10px;font-family:"Lilita One";font-weight:400}
 .pop{animation:pop .5s cubic-bezier(.2,1.6,.4,1) both}
 @keyframes pop{from{transform:scale(.4) rotate(-6deg);opacity:0}}
-
+ 
 .r-common{--c:#8da0c8}
 .r-rare{--c:#3fb4ff;box-shadow:0 6px 0 rgba(0,0,0,.6),0 0 14px #3fb4ff88}
 .r-epic{--c:#b85cff;box-shadow:0 6px 0 rgba(0,0,0,.6),0 0 22px #b85cffaa}
@@ -62,7 +62,13 @@ input,select{background:#fff;color:#000;box-shadow:none;max-width:100%}
   background-size:250% 100%;animation:sweep 3.2s ease-in-out infinite}
 .r-mythic .shine{mix-blend-mode:color-dodge}
 @keyframes sweep{from{background-position:150% 0}to{background-position:-100% 0}}
-
+ 
+dialog{background:var(--panel);color:var(--ink);border:4px solid var(--edge);border-radius:14px;padding:20px 24px;width:min(420px,92vw)}
+dialog::backdrop{background:rgba(5,8,40,.7)}
+dialog h2{margin-top:0}
+dialog input{width:100%;margin-bottom:6px}
+.err{color:#ff8a8a;min-height:1.5em;margin:4px 0 10px}
 #toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,120px);background:#fff;color:#000;border:3px solid #000;border-radius:10px;padding:10px 20px;transition:transform .25s;z-index:9}
 #toast.show{transform:translate(-50%,0)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+ 
