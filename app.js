@@ -4,13 +4,17 @@ import {getFirestore,doc,getDoc,setDoc,collection,query,where,getDocs,runTransac
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 /* 1. Paste your Firebase web app config here (Project settings > Your apps). */
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT",
-  appId: "YOUR_APP_ID"
-};
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyARZqw91RNmiP2JolsKrsiGzJfdO75SDac",
+    authDomain: "cards-f15ba.firebaseapp.com",
+    projectId: "cards-f15ba",
+    storageBucket: "cards-f15ba.firebasestorage.app",
+    messagingSenderId: "335008809953",
+    appId: "1:335008809953:web:ed7650506c86789477c8a0"
+  };
 
+  
 const API = "https://146.59.93.5/demonlist/api/levels.php";
 const PACK_SIZE = 3, COOLDOWN_MS = 60_000;
 
