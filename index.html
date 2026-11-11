@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Demon Deck – Geometry Dash trading cards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>Demon Deck</h1>
+  <nav id="nav" hidden>
+    <button data-tab="collection" class="on">Collection</button>
+    <button data-tab="packs">Open packs</button>
+    <button data-tab="trades">Trades</button>
+  </nav>
+  <div id="who"></div>
+</header>
+
+<main>
+  <section id="login" class="panel">
+    <h2>Collect the hardest levels in Geometry Dash</h2>
+    <p>Open packs, pull cards from the demon list, and trade with other collectors. Sign in to start.</p>
+    <button id="signin" class="big">Sign in with Google</button>
+  </section>
+
+  <section id="collection" class="tab" hidden>
+    <p id="stats" class="muted"></p>
+    <div id="grid" class="grid"></div>
+  </section>
+
+  <section id="packs" class="tab" hidden>
+    <div class="panel">
+      <h2>Open a pack</h2>
+      <p>Each pack holds 3 random levels. Rarer cards run out: there is only ever one Mythic per level.</p>
+      <button id="open" class="big">Open pack</button>
+      <p id="cool" class="muted"></p>
+    </div>
+    <div id="reveal" class="grid"></div>
+  </section>
+
+  <section id="trades" class="tab" hidden>
+    <div class="panel">
+      <h2>Start a trade</h2>
+      <div class="row">
+        <input id="who-name" placeholder="Collector's display name">
+        <button id="find">Find collector</button>
+      </div>
+      <div id="tradeForm" hidden>
+        <label>Their card you want <select id="want"></select></label>
+        <label>Your card you offer <select id="offer"></select></label>
+        <button id="send" class="big">Send trade offer</button>
+      </div>
+    </div>
+    <h2>Incoming offers</h2><div id="incoming" class="list"></div>
+    <h2>Offers you sent</h2><div id="outgoing" class="list"></div>
+  </section>
+</main>
+
+<div id="toast" role="status"></div>
+<script type="module" src="app.js"></script>
+</body>
+</html>
