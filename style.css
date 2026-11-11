@@ -122,3 +122,12 @@ fieldset.picker legend{font-family:"Lilita One";padding:0 8px}
 .picklist .card,.mini .card{padding:8px}
 .picklist .card h3,.mini .card h3{font-size:1rem;margin-top:8px}
 .picklist .card .by,.mini .card .by,.picklist .card .foot,.mini .card .foot{font-size:.75rem}
+
+/* ---------- catalog owner tooltip ---------- */
+td.hasTip{cursor:help;text-decoration:underline dotted;text-underline-offset:3px}
+td.hasTip.out{text-decoration:line-through underline dotted}
+td.hasTip:focus-visible{outline:3px solid #fff;outline-offset:-3px}
+.tip{position:fixed;z-index:20;max-width:280px;background:#fff;color:#000;border:3px solid #000;border-radius:10px;padding:8px 12px;
+  font-weight:800;font-size:.85rem;box-shadow:0 4px 0 #000;pointer-events:none;white-space:pre-wrap}
+.tip[hidden]{display:none}
+.tip .tt{font-family:"Lilita One";font-weight:400;font-size:1rem;margin-bottom:2px}
