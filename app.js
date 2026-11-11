@@ -2,7 +2,7 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,signInWithPopup,signOut,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {getFirestore,doc,getDoc,setDoc,collection,query,where,getDocs,runTransaction,writeBatch,onSnapshot,serverTimestamp}
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-
+ 
 /* 1. Paste your Firebase web app config here (Project settings > Your apps). */
   // Your web app's Firebase configuration
   const firebaseConfig = {
