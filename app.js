@@ -30,7 +30,7 @@ async function refreshCollection(){
   const uniq=new Set(mine.map(c=>c.level_id)).size;
   $("#stats").textContent = mine.length ? `${mine.length} cards · ${uniq} different levels` : "No cards yet. Open a pack to get started.";
   showProgress($("#progress"),mine);
-  $("#offer").replaceChildren(...mine.map(c=>new Option(label(c),c.id)));
+  fillPicks($("#offer"),mine,picked($("#offer")));
 }
 
 /* ---------- trading ---------- */
@@ -42,8 +42,7 @@ async function openCollector(id,wantId){
   if(!cards.length) return toast(u.name+" has no cards yet.");
   found={id,name:u.name,cards};
   $("#who-name").value=u.name;
-  $("#want").replaceChildren(...cards.map(c=>new Option(label(c),c.id)));
-  if(wantId && cards.some(c=>c.id===wantId)) $("#want").value=wantId;
+  fillPicks($("#want"),cards,wantId?[wantId]:[]);
   $("#tradeForm").hidden=false;
 }
 async function findCollector(){
@@ -52,10 +51,25 @@ async function findCollector(){
   if(!data || data.id===me.id) return toast("No other collector with that name.");
   await openCollector(data.id);
 }
+/* Checkbox lists: tick as many cards as you like on each side (1 for 1, 2 for 1, 3 for 2, ...). */
+const picked = box => [...box.querySelectorAll("input:checked")].map(i=>i.value);
+function updateSummary(){
+  const g=picked($("#offer")).length, w=picked($("#want")).length;
+  $("#tradeSummary").textContent = g||w ? `You give ${g}, you get ${w}.` : "";
+}
+function fillPicks(box,cards,checked=[]){
+  box.replaceChildren(...cards.map(c=>{
+    const row=el("label","pick"), cb=document.createElement("input"), txt=el("span","",label(c));
+    cb.type="checkbox"; cb.value=c.id; cb.checked=checked.includes(c.id); cb.onchange=updateSummary;
+    txt.style.setProperty("--c",T[c.rarity].color); row.append(cb,txt); return row;
+  }));
+  updateSummary();
+}
 async function sendTrade(){
-  const offer=$("#offer").value, want=$("#want").value;
-  if(!offer||!want) return toast("Pick one card from each side.");
-  try{ await api("create_trade",{offer,want}); toast("Trade offer sent."); $("#tradeForm").hidden=true; loadTrades(); }
+  const offer=picked($("#offer")), want=picked($("#want"));
+  if(!offer.length||!want.length) return toast("Pick at least one card on each side.");
+  const single = offer.length===1 && want.length===1;      // 1-for-1 keeps the original request shape
+  try{ await api("create_trade", single ? {offer:offer[0],want:want[0]} : {offer,want}); toast("Trade offer sent."); $("#tradeForm").hidden=true; loadTrades(); }
   catch(e){ toast(e.message); }
 }
 async function respond(trade,act){
@@ -63,11 +77,18 @@ async function respond(trade,act){
   catch(e){ toast(e.message); }
   loadTrades();
 }
+/* A trade's offer/want can be one card (old trades) or an array of cards. */
+const asList = x => Array.isArray(x) ? x : [x];
+const plain = cards => asList(cards).map(label).join(", ");
+function names(cards){
+  const s=el("span");
+  asList(cards).forEach((c,i)=>{ if(i) s.append(", "); const b=el("b","",label(c)); b.style.setProperty("--c",T[c.rarity].color); s.append(b); });
+  return s;
+}
 function offerRow(t,incoming){
   const row=el("div","offer"), txt=el("div","txt");
-  const card=incoming?t.offer:t.want, give=el("b",""," "+label(card)); give.style.setProperty("--c",T[card.rarity].color);
-  txt.append(incoming?`${t.sender.name} offers`:"You want", give,
-    el("div","muted", incoming ? `for your ${label(t.want)}` : `from ${t.receiver.name} for your ${label(t.offer)}`));
+  txt.append(incoming?`${t.sender.name} offers `:"You want ", names(incoming?t.offer:t.want),
+    el("div","muted", incoming ? `for your ${plain(t.want)}` : `from ${t.receiver.name} for your ${plain(t.offer)}`));
   row.append(txt);
   const btn=(text,act)=>{const b=el("button","",text); b.onclick=()=>respond(t.id,act); return b};
   row.append(...(incoming ? [btn("Accept","accept"),btn("Decline","decline")] : [btn("Cancel","cancel")]));

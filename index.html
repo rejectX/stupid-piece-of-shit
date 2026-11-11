@@ -46,8 +46,9 @@
         <button id="find">Find collector</button>
       </div>
       <div id="tradeForm" hidden>
-        <label>Their card you want <select id="want"></select></label>
-        <label>Your card you offer <select id="offer"></select></label>
+        <fieldset class="picker"><legend>Their cards you want</legend><div id="want" class="picklist"></div></fieldset>
+        <fieldset class="picker"><legend>Your cards you offer</legend><div id="offer" class="picklist"></div></fieldset>
+        <p id="tradeSummary" class="muted"></p>
         <button id="send" class="big">Send trade offer</button>
       </div>
     </div>

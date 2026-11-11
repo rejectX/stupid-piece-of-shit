@@ -101,3 +101,12 @@ table.data th.tiername{font-family:"Lilita One";font-weight:400}
 table.data td.out{color:#ff8a8a;text-decoration:line-through}
 table.data tr.sum td{font-weight:800;border-bottom:0}
 #levelFilter{width:100%;max-width:760px;margin-bottom:14px}
+
+/* ---------- multi-card trade pickers ---------- */
+fieldset.picker{border:3px solid var(--edge);border-radius:10px;margin:12px 0;padding:6px 8px 8px}
+fieldset.picker legend{font-family:"Lilita One";padding:0 8px}
+.picklist{max-height:240px;overflow-y:auto}
+.panel label.pick{display:flex;gap:10px;align-items:center;margin:0;padding:5px 8px;border-radius:8px;cursor:pointer}
+.panel label.pick:hover{background:rgba(255,255,255,.08)}
+.pick input{width:18px;height:18px;padding:0;accent-color:var(--accent);flex:none}
+.pick span{color:var(--c);font-weight:800}
