@@ -1,0 +1,38 @@
+import {doc,getDoc} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import {db} from "./firebase.js";
+import {TIERS,$,el,cardEl,cardsOf,onUser} from "./shared.js";
+
+const uid = new URLSearchParams(location.search).get("u");
+
+onUser(async me=>{
+  const name$ = $("#pname");
+  if(!uid){ name$.textContent="No collector selected."; return; }
+  const u = await getDoc(doc(db,"users",uid));
+  if(!u.exists()){
+    name$.textContent = uid===me.uid ? "Your profile isn't set up yet." : "Collector not found.";
+    $("#pstats").textContent = uid===me.uid ? "Open the Collection page once, then come back." : "";
+    return;
+  }
+  const name = u.data().name, own = uid===me.uid;
+  document.title = `${name} – Demon Deck`;
+  name$.textContent = own ? `${name} (you)` : name;
+
+  const cards = await cardsOf(uid);
+  const uniq = new Set(cards.map(c=>c.levelId)).size;
+  $("#pstats").textContent = cards.length ? `${cards.length} cards · ${uniq} different levels` : "No cards yet.";
+
+  $("#chips").replaceChildren(...TIERS.map(t=>{
+    const chip = el("span","chip",`${t.name} ${cards.filter(c=>c.rarity===t.id).length}`);
+    chip.style.setProperty("--c",t.color); return chip;
+  }));
+
+  $("#grid").replaceChildren(...cards.map(c=>{
+    if(own) return cardEl(c);
+    const a = el("a","cardlink");                      // click a card to start a trade for it
+    a.href = `index.html?trade=${encodeURIComponent(uid)}&want=${encodeURIComponent(c.id)}`;
+    a.title = "Trade for this card"; a.append(cardEl(c)); return a;
+  }));
+
+  const t = $("#tradeBtn");
+  if(!own && cards.length){ t.href = `index.html?trade=${encodeURIComponent(uid)}`; t.hidden = false; }
+});

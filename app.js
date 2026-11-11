@@ -1,42 +1,11 @@
-import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import {getAuth,GoogleAuthProvider,signInWithPopup,signOut,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import {getFirestore,doc,getDoc,setDoc,collection,query,where,getDocs,runTransaction,writeBatch,onSnapshot,serverTimestamp}
+import {GoogleAuthProvider,signInWithPopup,signOut,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {doc,getDoc,setDoc,collection,query,where,getDocs,runTransaction,writeBatch,onSnapshot,serverTimestamp}
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import {auth,db} from "./firebase.js";
+import {TIERS,$,el,toast,ytId,label,cardEl,cardsOf,profileUrl} from "./shared.js";
  
-/* 1. Paste your Firebase web app config here (Project settings > Your apps). */
-  // Your web app's Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyARZqw91RNmiP2JolsKrsiGzJfdO75SDac",
-    authDomain: "cards-f15ba.firebaseapp.com",
-    projectId: "cards-f15ba",
-    storageBucket: "cards-f15ba.firebasestorage.app",
-    messagingSenderId: "335008809953",
-    appId: "1:335008809953:web:ed7650506c86789477c8a0"
-  };
-
-  
 const API = "https://146.59.93.5/demonlist/api/levels.php";
 const PACK_SIZE = 3, COOLDOWN_MS = 60_000;
- 
-/* Rarity tiers, best first. Each level has its own serial counter per tier, so tiers never share
-   a serial. cap = max copies per level. weight = chance of rolling that tier. If a tier is sold out
-   for a level, the roll falls down to the next tier. */
-const TIERS = [
-  {id:"mythic",    name:"Mythic",    cap:1,        weight:1},
-  {id:"legendary", name:"Legendary", cap:5,        weight:4},
-  {id:"epic",      name:"Epic",      cap:20,       weight:10},
-  {id:"rare",      name:"Rare",      cap:60,       weight:25},
-  {id:"common",    name:"Common",    cap:Infinity, weight:60}
-];
-const T = Object.fromEntries(TIERS.map((t,i)=>[t.id,{...t,rank:i}]));
- 
-const app = initializeApp(firebaseConfig), auth = getAuth(app), db = getFirestore(app);
-const $ = s => document.querySelector(s);
-const el = (tag,cls,text) => {const e=document.createElement(tag); if(cls)e.className=cls; if(text!=null)e.textContent=text; return e};
-const toast = msg => {const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toast.id); toast.id=setTimeout(()=>t.classList.remove("show"),3500)};
-const ytId = u => (u||"").split("/embed/")[1]?.split(/[?&#]/)[0] || null;
-const serialText = c => T[c.rarity].cap===Infinity ? `#${c.serial}` : `#${c.serial} / ${T[c.rarity].cap}`;
-const label = c => `${c.lvlname} · ${T[c.rarity].name} ${serialText(c)}`;
  
 let me=null, myName="", levels=[], mine=[], found=null, incoming=[], outgoing=[];
  
@@ -47,15 +16,6 @@ async function loadLevels(){
   try{ data = await (await fetch(API)).json(); }
   catch(e){ data = await (await fetch("levels.json")).json(); }   // fallback: saved copy of the API response
   levels = data.filter(l=>l.id!=null && l.lvlname);
-}
- 
-/* ---------- card rendering ---------- */
-function cardEl(c){
-  const d = el("div","card r-"+c.rarity), th = el("div","thumb");
-  if(c.yt){const i=el("img"); i.alt=""; i.loading="lazy"; i.src=`https://i.ytimg.com/vi/${c.yt}/hqdefault.jpg`; th.append(i)}
-  const foot = el("div","foot"); foot.append(el("span","rar",T[c.rarity].name), el("span","",serialText(c)));
-  d.append(el("div","shine"), th, el("h3","",c.lvlname), el("p","by","by "+c.creator), foot);
-  return d;
 }
  
 /* ---------- minting ---------- */
@@ -105,11 +65,6 @@ async function cooldownTick(){
 }
  
 /* ---------- collection ---------- */
-const sortCards = a => a.sort((x,y)=>T[x.rarity].rank-T[y.rarity].rank || x.lvlname.localeCompare(y.lvlname) || x.serial-y.serial);
-async function cardsOf(uid){
-  const s = await getDocs(query(collection(db,"cards"),where("ownerUid","==",uid)));
-  return sortCards(s.docs.map(d=>({id:d.id,...d.data()})));
-}
 async function refreshCollection(){
   mine = await cardsOf(me.uid);
   const g=$("#grid"); g.replaceChildren(...mine.map(cardEl));
@@ -119,16 +74,24 @@ async function refreshCollection(){
 }
  
 /* ---------- trading ---------- */
+async function openCollector(uid,wantId){
+  if(uid===me.uid) return toast("You can't trade with yourself.");
+  const u=await getDoc(doc(db,"users",uid));
+  if(!u.exists()) return toast("Collector not found.");
+  const name=u.data().name, cards=await cardsOf(uid);
+  if(!cards.length) return toast(name+" has no cards yet.");
+  found={uid,name,cards};
+  $("#who-name").value=name;
+  $("#want").replaceChildren(...cards.map(c=>new Option(label(c),c.id)));
+  if(wantId && cards.some(c=>c.id===wantId)) $("#want").value=wantId;
+  $("#tradeForm").hidden=false;
+}
 async function findCollector(){
   const name=$("#who-name").value.trim(); if(!name) return;
   const s=await getDocs(query(collection(db,"users"),where("nameLower","==",name.toLowerCase())));
   const u=s.docs.find(d=>d.id!==me.uid);
   if(!u) return toast("No other collector with that name.");
-  const cards=await cardsOf(u.id);
-  if(!cards.length) return toast(name+" has no cards yet.");
-  found={uid:u.id,name:u.data().name,cards};
-  $("#want").replaceChildren(...cards.map(c=>new Option(label(c),c.id)));
-  $("#tradeForm").hidden=false;
+  await openCollector(u.id);
 }
 async function sendTrade(){
   const offer=mine.find(c=>c.id===$("#offer").value), want=found?.cards.find(c=>c.id===$("#want").value);
@@ -216,7 +179,8 @@ function renderWho(){
   const out=el("button","","Sign out"), ren=el("button","","Change username");
   out.onclick=()=>signOut(auth);
   ren.onclick=()=>{$("#newName").value=myName; $("#nameErr").textContent=""; $("#nameDlg").showModal(); $("#newName").select()};
-  $("#who").replaceChildren(el("span","",myName),ren,out);
+  const nm=el("a","",myName); nm.href=profileUrl(me.uid); nm.title="View your profile";
+  $("#who").replaceChildren(nm,ren,out);
 }
 $("#cancelName").onclick=()=>$("#nameDlg").close();
 $("#nameForm").onsubmit=async e=>{
@@ -248,7 +212,11 @@ onAuthStateChanged(auth, async u=>{
   try{ await ensureName(); }catch(e){ return toast(e.message); }
   renderWho();
   if(!unsubscribed){watchTrades(); unsubscribed=true}
-  cooldownTick(); show("collection");
+  $("#myProfile").href=profileUrl(u.uid);
+  cooldownTick();
+  const p=new URLSearchParams(location.search), tu=p.get("trade");
+  if(tu){ await refreshCollection(); show("trades"); await openCollector(tu,p.get("want")); history.replaceState(null,"",location.pathname); }
+  else show("collection");
   loadLevels().catch(()=>toast("Couldn't load level data. See README note on the API."));
 });
  
