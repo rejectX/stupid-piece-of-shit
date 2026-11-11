@@ -1,6 +1,6 @@
 import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {auth} from "./firebase.js";
-import {API_URL} from "./config.js";
+import {API_URL,LEVELS_URL} from "./config.js";
 
 /* Rarity tiers, best first (caps and odds are enforced in schema.sql). */
 export const TIERS = [
@@ -53,4 +53,29 @@ export function onUser(cb){
       await cb(me);
     }catch(e){ console.error(e); toast(e.message); }
   });
+}
+
+/* ---------- collection progress ---------- */
+let totalP=null;
+/* Size of the full demon list (fetched once per page). Resolves to 0 if the list can't be loaded. */
+export function totalLevels(){
+  return totalP ||= fetch(LEVELS_URL).then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); })
+    .then(l=>Array.isArray(l)?l.length:0).catch(e=>{ console.error("Demon list fetch failed:",e); return 0; });
+}
+/* Progress bar: unique levels owned out of the whole list. Returns null if the total is unknown. */
+export function progressEl(owned,total){
+  if(!total) return null;
+  const pct=Math.min(100,owned/total*100), box=el("div","progress");
+  const bar=el("div","bar"); bar.style.width=pct+"%";
+  const track=el("div","track"); track.setAttribute("role","progressbar");
+  track.setAttribute("aria-valuemin","0"); track.setAttribute("aria-valuemax",String(total)); track.setAttribute("aria-valuenow",String(owned));
+  track.append(bar);
+  const pctText=pct>0&&pct<1?"<1":pct.toFixed(pct<10?1:0).replace(/\.0$/,"");
+  box.append(track, el("span","ptext",`${owned} / ${total} levels collected (${pctText}%)`));
+  return box;
+}
+/* Fills `host` with the bar for `cards`; leaves it empty if the list is unavailable. */
+export async function showProgress(host,cards){
+  const total=await totalLevels(), p=progressEl(new Set(cards.map(c=>c.level_id)).size,total);
+  host.replaceChildren(...(p?[p]:[]));
 }

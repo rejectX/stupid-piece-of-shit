@@ -1,4 +1,4 @@
-import {TIERS,$,el,cardEl,cardsOf,onUser,api} from "./shared.js";
+import {TIERS,$,el,cardEl,cardsOf,onUser,api,showProgress} from "./shared.js";
 
 const uid = new URLSearchParams(location.search).get("u");
 
@@ -13,6 +13,8 @@ onUser(async me=>{
   const cards = await cardsOf(uid);
   const uniq = new Set(cards.map(c=>c.level_id)).size;
   $("#pstats").textContent = cards.length ? `${cards.length} cards · ${uniq} different levels` : "No cards yet.";
+
+  showProgress($("#progress"),cards);
 
   $("#chips").replaceChildren(...TIERS.map(t=>{
     const chip = el("span","chip",`${t.name} ${cards.filter(c=>c.rarity===t.id).length}`);

@@ -1,6 +1,6 @@
 import {signOut,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {auth} from "./firebase.js";
-import {T,$,el,toast,label,cardEl,cardsOf,profileUrl,api,signIn} from "./shared.js";
+import {T,$,el,toast,label,cardEl,cardsOf,profileUrl,api,signIn,showProgress} from "./shared.js";
 
 const NAME_RE = /^[A-Za-z0-9_.-]{3,20}$/;
 let me=null, mine=[], found=null, coolTimer;
@@ -30,6 +30,7 @@ async function refreshCollection(){
   $("#grid").replaceChildren(...mine.map(cardEl));
   const uniq=new Set(mine.map(c=>c.level_id)).size;
   $("#stats").textContent = mine.length ? `${mine.length} cards · ${uniq} different levels` : "No cards yet. Open a pack to get started.";
+  showProgress($("#progress"),mine);
   $("#offer").replaceChildren(...mine.map(c=>new Option(label(c),c.id)));
 }
 
