@@ -48,6 +48,7 @@ export const NAV = [
   {tab:"trades",text:"Trades"},
   {href:"users.html",text:"Players"},
   {href:"catalog.html",text:"Catalog"},
+  {href:"leaderboard.html",text:"Leaderboard"},
   {mine:true,text:"My profile"}
 ];
 /* On index.html pass onTab to switch tabs in place; everywhere else the tab buttons link to index.html#tab. */
@@ -55,14 +56,48 @@ export function renderNav(me,onTab){
   const here = location.pathname.split("/").pop() || "index.html";
   $("#nav").replaceChildren(...NAV.map(n=>{
     if(n.tab){
-      if(onTab){ const b=el("button","",n.text); b.dataset.tab=n.tab; b.onclick=()=>onTab(n.tab); return b; }
-      const a=el("a","btn",n.text); a.href=`index.html#${n.tab}`; return a;
+      let x;
+      if(onTab){ x=el("button","",n.text); x.dataset.tab=n.tab; x.onclick=()=>onTab(n.tab); }
+      else { x=el("a","btn",n.text); x.href=`index.html#${n.tab}`; }
+      if(n.tab==="trades"){ const b=el("span","badge"); b.hidden=true; b.dataset.badge="trades"; x.append(b); }   // new-offer count
+      return x;
     }
     const href = n.mine ? profileUrl(me.id) : n.href, a = el("a","btn",n.text); a.href = href;
     const ownProfile = n.mine && new URLSearchParams(location.search).get("u")===me.id;
     if(here===href.split("?")[0] && (!n.mine || ownProfile)) a.classList.add("on");
     return a;
   }));
+  watchTrades(me);
+}
+
+/* ---------- new-offer indicator on the Trades button ---------- */
+/* An incoming offer counts as new until the person has opened the Trades tab with it listed.
+   "Seen" is remembered per account in this browser's localStorage. */
+const seenKey = me => `seenTrades:${me.id}`;
+const readSeen = me => { try{ return new Set(JSON.parse(localStorage.getItem(seenKey(me))||"[]")); }catch{ return new Set(); } };
+function setTradeBadge(n){
+  document.querySelectorAll('.badge[data-badge="trades"]').forEach(b=>{
+    b.textContent = n>9 ? "9+" : String(n); b.hidden = !n;
+    b.parentElement.setAttribute("aria-label", n ? `Trades, ${n} new` : "Trades");
+  });
+}
+/* Call once the incoming offers have been shown. */
+export function markTradesSeen(me,incoming){
+  try{ localStorage.setItem(seenKey(me),JSON.stringify(incoming.map(t=>t.id))); }catch{}
+  setTradeBadge(0);
+}
+async function refreshTradeBadge(me){
+  if(document.body.dataset.tab==="trades") return;          // they're looking at the list right now
+  try{
+    const seen = readSeen(me);
+    setTradeBadge((await api("trades")).filter(t=>t.to_id===me.id && !seen.has(t.id)).length);
+  }catch(e){ console.error(e); }
+}
+let tradeTimer = null;
+function watchTrades(me){
+  refreshTradeBadge(me);
+  clearInterval(tradeTimer); tradeTimer = setInterval(()=>refreshTradeBadge(me),60000);
+  document.onvisibilitychange = () => { if(!document.hidden) refreshTradeBadge(me); };
 }
 
 /* Username link, Change username and Sign out; the rename dialog is created on demand so every page has it. */

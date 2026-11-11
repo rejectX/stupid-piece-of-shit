@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Leaderboard – gambling</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1><a href="index.html">gambling</a></h1>
+  <nav id="nav"></nav>
+  <div id="who"></div>
+</header>
+<main>
+  <section id="login" class="panel" hidden>
+    <h2>Sign in to see the leaderboard</h2>
+    <button id="signin" class="big">Sign in with Google</button>
+  </section>
+  <section id="content" hidden>
+    <h2>Leaderboard</h2>
+    <div id="tabs" class="tabs" role="tablist" aria-label="Rank players by"></div>
+    <p id="status" class="muted">Counting cards…</p>
+    <div class="tablewrap"><table id="board" class="data"></table></div>
+  </section>
+</main>
+<div id="toast" role="status"></div>
+<script type="module" src="leaderboard.js"></script>
+</body>
+</html>

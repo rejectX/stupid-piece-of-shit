@@ -1,8 +1,8 @@
 import {onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {auth} from "./firebase.js";
-import {$,el,toast,cardEl,cardsOf,api,signIn,showProgress,renderNav,renderWho} from "./shared.js";
+import {$,el,toast,cardEl,cardsOf,api,signIn,showProgress,renderNav,renderWho,markTradesSeen} from "./shared.js";
 
-let me=null, mine=[], found=null, coolTimer;
+let me=null, mine=null, mineSeq=0, found=null, coolTimer;   // mine === null until the first load finishes
 
 /* ---------- packs ---------- */
 async function openPack(){
@@ -24,13 +24,18 @@ async function cooldownTick(){
 }
 
 /* ---------- collection ---------- */
+/* Loads my cards and redraws everything that shows them: the collection grid AND the trade form's "offer" list.
+   Only the newest request is applied, so a slow older response can't overwrite a newer one. */
 async function refreshCollection(){
-  mine = await cardsOf(me.id);
+  const seq = ++mineSeq, cards = await cardsOf(me.id);
+  if(seq!==mineSeq) return mine;
+  mine = cards;
   $("#grid").replaceChildren(...mine.map(cardEl));
   const uniq=new Set(mine.map(c=>c.level_id)).size;
   $("#stats").textContent = mine.length ? `${mine.length} cards · ${uniq} different levels` : "No cards yet. Open a pack to get started.";
   showProgress($("#progress"),mine);
-  fillPicks($("#offer"),mine,picked($("#offer")));
+  fillPicks($("#offer"),mine,picked($("#offer")),"You don't have any cards yet. Open a pack first.");
+  return mine;
 }
 
 /* ---------- trading ---------- */
@@ -40,6 +45,8 @@ async function openCollector(id,wantId){
   if(!u) return toast("Collector not found.");
   const cards = await cardsOf(id);
   if(!cards.length) return toast(u.name+" has no cards yet.");
+  try{ if(mine===null) await refreshCollection(); }                // make sure my own cards are loaded before the form opens
+  catch(e){ return toast("Couldn't load your cards: "+e.message); }
   found={id,name:u.name,cards};
   $("#who-name").value=u.name;
   fillPicks($("#want"),cards,wantId?[wantId]:[]);
@@ -57,7 +64,8 @@ function updateSummary(){
   const g=picked($("#offer")).length, w=picked($("#want")).length;
   $("#tradeSummary").textContent = g||w ? `You give ${g}, you get ${w}.` : "";
 }
-function fillPicks(box,cards,checked=[]){
+function fillPicks(box,cards,checked=[],empty="Nothing to show."){
+  if(!cards.length) return box.replaceChildren(el("p","muted",empty)), updateSummary();
   box.replaceChildren(...cards.map(c=>{
     const row=el("label","pick"), cb=document.createElement("input");
     cb.type="checkbox"; cb.value=c.id; cb.checked=checked.includes(c.id); cb.onchange=updateSummary;
@@ -92,7 +100,9 @@ function offerRow(t,incoming){
 async function loadTrades(){
   let data; try{ data=await api("trades"); }catch(e){ return toast(e.message); }
   const fill=(box,list,inc)=>box.replaceChildren(...(list.length?list.map(t=>offerRow(t,inc)):[el("p","muted","Nothing pending.")]));
-  fill($("#incoming"),data.filter(t=>t.to_id===me.id),true);
+  const incoming = data.filter(t=>t.to_id===me.id);
+  fill($("#incoming"),incoming,true);
+  markTradesSeen(me,incoming);
   fill($("#outgoing"),data.filter(t=>t.from_id===me.id),false);
 }
 
@@ -100,8 +110,10 @@ async function loadTrades(){
 function show(tab){
   document.querySelectorAll(".tab").forEach(s=>s.hidden=s.id!==tab);
   document.querySelectorAll("nav [data-tab]").forEach(b=>b.classList.toggle("on",b.dataset.tab===tab));
-  if(tab==="collection") refreshCollection();
-  if(tab==="trades") loadTrades();
+  document.body.dataset.tab = tab;
+  const fail = e => toast(e.message);
+  if(tab==="collection") refreshCollection().catch(fail);
+  if(tab==="trades"){ loadTrades(); refreshCollection().catch(fail); }   // reload my cards too, so the offer list is never stale or empty
 }
 $("#signin").onclick=signIn; $("#open").onclick=openPack; $("#find").onclick=findCollector; $("#send").onclick=sendTrade;
 

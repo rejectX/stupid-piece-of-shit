@@ -137,3 +137,17 @@ th.sortable{cursor:pointer;user-select:none}
 th.sortable:hover{text-decoration:underline;text-underline-offset:3px}
 th.sortable:focus-visible{outline:3px solid #fff;outline-offset:-3px}
 th.sortable .arrow{font-size:.8em}
+
+/* ---------- new-offer badge on the Trades button ---------- */
+.badge{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;margin-left:8px;border-radius:999px;
+  background:#ff3b3b;color:#fff;border:2px solid #000;font-family:"Nunito";font-size:.75rem;font-weight:800;line-height:1;vertical-align:middle;
+  animation:badgePulse 1.8s ease-in-out infinite}
+@keyframes badgePulse{0%,100%{box-shadow:0 0 0 0 rgba(255,59,59,.7)}50%{box-shadow:0 0 0 7px rgba(255,59,59,0)}}
+
+/* ---------- leaderboard ---------- */
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}
+.tabs button.on{background:var(--accent)}
+table.data tr.me td{background:rgba(255,255,255,.1)}
+table.data td.rank{font-family:"Lilita One";width:1%}
+table.data td.num{font-weight:800;text-align:right}
+table.data td.num.tiername{color:var(--c)}
