@@ -49,19 +49,21 @@ export function onUser(cb){
     try{
       const me = await api("claim");
       const link=(href,text)=>{const a=el("a","btn",text); a.href=href; return a};
-      $("#nav").replaceChildren(link("index.html","Collection"),link("users.html","Players"),link(profileUrl(me.id),"My profile"));
+      $("#nav").replaceChildren(link("index.html","Collection"),link("users.html","Players"),link("catalog.html","Catalog"),link(profileUrl(me.id),"My profile"));
       await cb(me);
     }catch(e){ console.error(e); toast(e.message); }
   });
 }
 
 /* ---------- collection progress ---------- */
-let totalP=null;
-/* Size of the full demon list (fetched once per page). Resolves to 0 if the list can't be loaded. */
-export function totalLevels(){
-  return totalP ||= fetch(LEVELS_URL).then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); })
-    .then(l=>Array.isArray(l)?l.length:0).catch(e=>{ console.error("Demon list fetch failed:",e); return 0; });
+let listP=null;
+/* The full demon list (fetched once per page). Resolves to [] if it can't be loaded. */
+export function levelList(){
+  return listP ||= fetch(LEVELS_URL).then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); })
+    .then(l=>Array.isArray(l)?l:[]).catch(e=>{ console.error("Demon list fetch failed:",e); return []; });
 }
+/* Size of the full demon list; 0 if unavailable. */
+export const totalLevels = () => levelList().then(l=>l.length);
 /* Progress bar: unique levels owned out of the whole list. Returns null if the total is unknown. */
 export function progressEl(owned,total){
   if(!total) return null;
