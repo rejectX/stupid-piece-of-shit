@@ -1,6 +1,6 @@
 import {GoogleAuthProvider,signInWithPopup,signOut,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {auth} from "./firebase.js";
-import {API_URL,LEVELS_URL} from "./config.js";
+import {API_URL,LEVELS_URL,ADMIN_UID} from "./config.js";
 
 /* Rarity tiers, best first (caps and odds are enforced in schema.sql). */
 export const TIERS = [
@@ -17,6 +17,7 @@ export const el = (tag,cls,text) => {const e=document.createElement(tag); if(cls
 export const toast = msg => {const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toast.id); toast.id=setTimeout(()=>t.classList.remove("show"),3500)};
 export const serialText = c => T[c.rarity].cap===Infinity ? `#${c.serial}` : `#${c.serial} / ${T[c.rarity].cap}`;
 export const label = c => `${c.lvlname} · ${T[c.rarity].name} ${serialText(c)}`;
+export const isAdmin = me => !!me && me.id===ADMIN_UID;
 export const profileUrl = id => `profile.html?u=${encodeURIComponent(id)}`;
 export const signIn = () => signInWithPopup(auth,new GoogleAuthProvider()).catch(e=>toast(e.message));
 
@@ -50,12 +51,13 @@ export const NAV = [
   {href:"users.html",text:"Players"},
   {href:"catalog.html",text:"Catalog"},
   {href:"leaderboard.html",text:"Leaderboard"},
-  {mine:true,text:"My profile"}
+  {mine:true,text:"My profile"},
+  {href:"admin.html",text:"Admin",admin:true}      // only shown to ADMIN_UID
 ];
 /* On index.html pass onTab to switch tabs in place; everywhere else the tab buttons link to index.html#tab. */
 export function renderNav(me,onTab){
   const here = location.pathname.split("/").pop() || "index.html";
-  $("#nav").replaceChildren(...NAV.map(n=>{
+  $("#nav").replaceChildren(...NAV.filter(n=>!n.admin||isAdmin(me)).map(n=>{
     if(n.tab){
       let x;
       if(onTab){ x=el("button","",n.text); x.dataset.tab=n.tab; x.onclick=()=>onTab(n.tab); }

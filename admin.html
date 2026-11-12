@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin – gambling</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1><a href="index.html">gambling</a></h1>
+  <nav id="nav"></nav>
+  <div id="who"></div>
+</header>
+<main>
+  <section id="login" class="panel" hidden>
+    <h2>Sign in</h2>
+    <button id="signin" class="big">Sign in with Google</button>
+  </section>
+  <section id="content" hidden>
+    <h2>Admin: guaranteed cards</h2>
+    <p class="muted">A guaranteed card is added to that player's next pack. Up to 3 are used per pack (oldest first); any extras wait for the pack after.</p>
+
+    <div class="admin-grid">
+      <div class="panel">
+        <h2>1. Player</h2>
+        <input id="playerFilter" placeholder="Search players" aria-label="Search players" autocomplete="off">
+        <div id="playerResults" class="results"></div>
+      </div>
+      <div class="panel">
+        <h2>2. Card</h2>
+        <input id="levelFilter" placeholder="Search levels" aria-label="Search levels" autocomplete="off">
+        <div id="levelResults" class="results"></div>
+        <label>Rarity
+          <select id="rarity" aria-label="Rarity"></select>
+        </label>
+      </div>
+    </div>
+
+    <p id="summary" class="picked muted">Pick a player and a level.</p>
+    <button id="add" class="big" disabled>Guarantee this card</button>
+
+    <h2>Waiting for the player's next pack</h2>
+    <div id="pending" class="list"></div>
+    <h2>Already delivered</h2>
+    <div id="done" class="list"></div>
+  </section>
+</main>
+<div id="toast" role="status"></div>
+<script type="module" src="admin.js"></script>
+</body>
+</html>
