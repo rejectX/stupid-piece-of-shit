@@ -22,8 +22,9 @@ export const signIn = () => signInWithPopup(auth,new GoogleAuthProvider()).catch
 
 /* Every data call goes through the Edge Function, which checks the Firebase ID token. */
 export async function api(action,args={}){
-  const token = await auth.currentUser.getIdToken();
-  const r = await fetch(API_URL,{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({action,...args})});
+  const token = auth.currentUser ? await auth.currentUser.getIdToken() : null;   // signed-out visitors can only call public actions
+  const headers = {"Content-Type":"application/json", ...(token ? {Authorization:`Bearer ${token}`} : {})};
+  const r = await fetch(API_URL,{method:"POST",headers,body:JSON.stringify({action,...args})});
   const j = await r.json().catch(()=>({}));
   if(!r.ok) throw new Error(j.error||"Request failed");
   return j;
@@ -129,7 +130,28 @@ export function renderWho(me){
   $("#who").replaceChildren(nm,ren,out);
 }
 
-/* For profile.html, users.html and catalog.html: needs #login, #signin, #content, #nav, #who. cb receives the signed-in profile {id,name}. */
+/* Header for visitors who aren't signed in (public pages only). */
+function renderPublicHeader(){
+  clearInterval(tradeTimer);
+  const here = location.pathname.split("/").pop() || "index.html";
+  const home = el("a","btn","Home"), cat = el("a","btn","Catalog"), inb = el("button","","Sign in");
+  home.href = "index.html"; cat.href = "catalog.html"; if(here==="catalog.html") cat.classList.add("on");
+  inb.onclick = signIn;
+  $("#nav").replaceChildren(home,cat); $("#who").replaceChildren(inb);
+}
+/* For pages anyone can view (catalog.html): cb runs right away without needing a login,
+   and the header switches between the full signed-in version and the public one. Needs #content, #nav, #who. */
+export function onPage(cb){
+  $("#content").hidden = false;
+  onAuthStateChanged(auth, async u=>{
+    if(!u) return renderPublicHeader();
+    try{ const me = await api("claim"); renderNav(me); renderWho(me); }
+    catch(e){ console.error(e); toast(e.message); }
+  });
+  return cb();
+}
+
+/* For profile.html, users.html and leaderboard.html: needs #login, #signin, #content, #nav, #who. cb receives the signed-in profile {id,name}. */
 export function onUser(cb){
   $("#signin").onclick = signIn;
   onAuthStateChanged(auth, async u=>{

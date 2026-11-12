@@ -1,4 +1,4 @@
-import {TIERS,$,el,onUser,api,cardsOf,levelList} from "./shared.js";
+import {TIERS,$,el,onPage,api,levelList} from "./shared.js";
 
 const fmt = n => n.toLocaleString();
 const cell = (tag,text,cls) => el(tag,cls||"",text);
@@ -95,10 +95,11 @@ function renderLevels(){
   if(focusTier){ $(`#levels th[data-tier="${focusTier}"]`)?.focus(); focusTier = null; }
 }
 
-onUser(async()=>{
-  const [list, players] = await Promise.all([levelList(), api("profiles")]);
-  /* There is no "all cards" endpoint, so add up every player's collection (and remember who holds what). */
-  const all = (await Promise.all(players.map(async p=>(await cardsOf(p.id)).map(c=>({...c,owner:p.name}))))).flat();
+onPage(async()=>{
+  let list, data;
+  try{ [list, data] = await Promise.all([levelList(), api("catalog")]); }
+  catch(e){ $("#status").textContent = "Couldn't load the catalog: "+e.message; return; }
+  const all = data.cards.map(c=>({...c, owner:c.owner?.name || "Unknown"}));    // public: owner names only, no account ids
 
   const byLevel = new Map(), ownersByTier = {};
   list.forEach(l=>byLevel.set(String(l.id),{name:l.lvlname,pos:l.position,cards:{}}));
@@ -111,7 +112,7 @@ onUser(async()=>{
   rows = [...byLevel.values()].sort((a,b)=>(a.pos??1e9)-(b.pos??1e9) || a.name.localeCompare(b.name));
 
   const n = list.length || byLevel.size;
-  $("#status").textContent = `${fmt(all.length)} cards in circulation across ${fmt(n)} levels, held by ${fmt(players.length)} players. Hover a count to see who owns them.`
+  $("#status").textContent = `${fmt(all.length)} cards in circulation across ${fmt(n)} levels, held by ${fmt(data.players)} players. Hover a count to see who owns them.`
     + (list.length ? "" : ' (Demon list unavailable, so "Max possible" only covers levels that have been pulled.)');
   renderTiers(ownersByTier,n);
   $("#levelFilter").oninput = renderLevels;
